@@ -45,16 +45,12 @@ class User extends Authenticatable
     
     public function follow($userId)
     {
-        // confirm if already following
         $exist = $this->is_following($userId);
-        // confirming that it is not you
         $its_me = $this->id == $userId;
 
         if ($exist || $its_me) {
-            // do nothing if already following
             return false;
         } else {
-            // follow if not following
             $this->followings()->attach($userId);
             return true;
         }
@@ -62,18 +58,13 @@ class User extends Authenticatable
 
     public function unfollow($userId)
     {
-        // confirming if already following
         $exist = $this->is_following($userId);
-        // confirming that it is not you
         $its_me = $this->id == $userId;
 
-
         if ($exist && !$its_me) {
-            // stop following if following
             $this->followings()->detach($userId);
             return true;
-        } else {
-            // do nothing if not following
+        } else{
             return false;
         }
     }
@@ -87,6 +78,43 @@ class User extends Authenticatable
         $follow_user_ids = $this->followings()-> pluck('users.id')->toArray();
         $follow_user_ids[] = $this->id;
         return Micropost::whereIn('user_id', $follow_user_ids);
+    }
+    
+    
+    //favorite function
+    
+    public function favorites()
+    {
+        return $this->belongsToMany(Micropost::class, 'user_favorite', 'user_id', 'post_id')->withTimestamps();
+    }
+    
+    public function favorite($post_id)
+    {
+        $exist = $this-> is_favorite($post_id);
+        
+        if($exist){
+            return false;
+        }else{
+            $this->favorites()->attach($post_id);
+            return true;
+        }
+    }
+    
+    public function unfavorite($post_id)
+    {
+        $exist = $this->is_favorite($post_id);
+        
+        if($exist){
+            $this->favorites()->detach($post_id);
+            return true;
+        }else{
+            return false;
+        }
+    }
+    
+    public function is_favorite($post_id){
+        return $this->favorites()->where('post_id', $post_id)->exists();
+        
     }
     
 }
